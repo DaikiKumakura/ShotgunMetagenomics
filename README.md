@@ -10,6 +10,7 @@ So, if you want English explain, please ask me (https://daikikumakura.github.io/
 主にDockerによる解析のため、PythonやRなどの言語をローカル上に入れる必要は無いです。  
 （ただし解析した結果から図を作成する場合、その限りではありません）  
 以下ではその解析チュートリアルを示します。  
+何かあればお気軽にお尋ねください(https://daikikumakura.github.io/)。
 
 ## コンセプト
 可能な限り簡単で誰でも動かせる解析を目指します。  
