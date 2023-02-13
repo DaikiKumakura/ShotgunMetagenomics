@@ -78,6 +78,22 @@ docker images
 ```
 docker run -itv $(pwd):/home kumalpha/kneaddata
 ```
+このコマンドによって、「/home」がそのまま「metagenome」のディレクトリになる。  
+ここで解析を実行する。  
+
+#### 3-1-2. 解析の実行
+KneadDataによって、生データから宿主ゲノムリードを除去し、QCを行ってデータ(以下、QCしたデータ)のクレンジングを実施する。  
+このQCしたデータを用いて、その後の解析を実施する。  
+  
+まずは除去する宿主ゲノムをKneadDataが認識できるように以下のコマンドを打つ。  
+ここでは2でダウンロードしたヒトゲノム「hg38.fa」を例に示す。  
+```
+bowtie2-build ref/hg38.fa -o ref/ref_db ref_db_human
+```
+
+このコマンドによって、「metagenome」ディレクトリの「ref」ディレクトリに格納されている「hg38.fa」をKneadDataが扱えるようなデータファイルにした。  
+そして、そのデータファイルは「ref」の中に「ref_db_human」として格納されている。  
+
 
 
 ### 3-2. Taxonomic Profiling
