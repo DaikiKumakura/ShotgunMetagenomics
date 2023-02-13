@@ -36,8 +36,10 @@ Dockerさえ入っていれば動かせるようにしています。
 - KneadData
 - BBtools
 - HUMAnN3
-- metaWRAP  
-それぞれのイメージのpullは以下です。
+- metaWRAP
+
+それぞれのイメージのpullは以下です。  
+このコマンドをそれぞれコピペしてpullする。
 ```
 docker pull kumalpha/kneaddata
 docker pull kumalpha/bbtools
@@ -94,7 +96,7 @@ bowtie2-build ref/hg38.fa -o ref/ref_db ref_db
 そして、そのデータファイルは「ref」の中に「ref_db」として格納されている。  
   
 次にQCを実行する。  
-実行に際して、2でダウンロードしたbashスクリプト「qc.sh」を実行するだけでOK。
+実行に際して、2でダウンロードしたbashスクリプト「qc.sh」を実行するだけでOK。  
 ただし、以下の点を確認すること。  
 - 生データが「metagenome/raw」に格納されていること
 - 宿主ゲノムデータ群が「metagenome/ref」に格納されていること
