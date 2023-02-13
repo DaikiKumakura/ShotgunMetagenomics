@@ -64,15 +64,23 @@ docker images
 
 ---
 
-### 1. Quality Control
+### 3-1. Quality Control
 ダウンロードしたデータは生データであり、さまざまなノイズが入ったデータです。  
 まずはデータを精製してより使いやすいデータにしていきます。
 
 **解析ツール**
 - KneadData
 
+#### 3-1-1. Dockerからイメージを起動
+1でpullした「KneadData」を起動する。  
+まずは2で作成した「metagenome」ディレクトリにてターミナルを起動。  
+次に以下のコマンドを打って、KneadDataを起動させる。
+```
+docker run -itv $(pwd):/home kumalpha/kneaddata
+```
 
-### 2. Taxonomic Profiling
+
+### 3-2. Taxonomic Profiling
 QCをしたデータを使用して解析をしていきます。  
 まずはこのデータからどんな微生物がどれくらい存在していて、どんな酵素遺伝子を持っているかを見ていきます。  
 
@@ -81,7 +89,7 @@ QCをしたデータを使用して解析をしていきます。
 - HUMAnN3
 
 
-### 3. Construction MAG
+### 3-3. Construction MAG
 QCをしたデータを使用して解析をしていきます。  
 使えるデータ全てを使って、微生物のゲノムを再構成(MAG)します。  
 MAGはその後さまざまな解析に利用可能です。  
