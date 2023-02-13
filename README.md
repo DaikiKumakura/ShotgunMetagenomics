@@ -31,6 +31,24 @@ Dockerさえ入っていれば動かせるようにしています。
 3. ステップバイステップでの解析
 
 ## 1. イメージのpull
+まずはDockerHub(https://hub.docker.com/) から、今回の解析で使用するイメージをダウンロード＆インストール(pull)します。  
+今回使用するツールは以下の4つです。
+- KneadData
+- BBtools
+- HUMAnN3
+- metaWRAP
+それぞれのイメージのpullは以下です。
+```
+docker pull kumalpha/kneaddata
+docker pull kumalpha/bbtools
+docker pull kumalpha/humann3
+docker pull kumalpha/metawrap-checkm
+```
+これらはターミナル(Mac & Ubuntu (on WSL2))からできます。  
+pull後は以下のコマンドでイメージがローカル環境にあることを確認。
+```
+docker images
+```
 
 ## 2. デモデータなどのダウンロードとディレクトリの作成
 
@@ -59,6 +77,7 @@ QCをしたデータを使用して解析をしていきます。
 まずはこのデータからどんな微生物がどれくらい存在していて、どんな酵素遺伝子を持っているかを見ていきます。  
 
 **解析ツール**
+- BBtools
 - HUMAnN3
 
 
