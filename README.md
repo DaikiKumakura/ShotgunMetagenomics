@@ -157,6 +157,7 @@ BBtoolsを使用してデータを整形した(single-end化したQCデータ)�
 実行に際して、2でダウンロードしたbashスクリプト「profile.sh」を実行するだけでOK。  
 ただし、以下の点を確認すること。  
 - single-end化したQCデータが「metagenome/merged」に格納されていること
+- 各種データベースが「metagenome/db」に格納されていること
 ```
 bash merged.sh
 ```
