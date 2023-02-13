@@ -88,13 +88,23 @@ KneadDataによって、生データから宿主ゲノムリードを除去し�
 まずは除去する宿主ゲノムをKneadDataが認識できるように以下のコマンドを打つ。  
 ここでは2でダウンロードしたヒトゲノム「hg38.fa」を例に示す。  
 ```
-bowtie2-build ref/hg38.fa -o ref/ref_db ref_db_human
+bowtie2-build ref/hg38.fa -o ref/ref_db ref_db
 ```
-
 このコマンドによって、「metagenome」ディレクトリの「ref」ディレクトリに格納されている「hg38.fa」をKneadDataが扱えるようなデータファイルにした。  
-そして、そのデータファイルは「ref」の中に「ref_db_human」として格納されている。  
-
-
+そして、そのデータファイルは「ref」の中に「ref_db」として格納されている。  
+  
+次にQCを実行する。  
+実行に際して、2でダウンロードしたbashスクリプト「qc.sh」を実行するだけでOK。
+ただし、以下の点を確認すること。  
+- 生データが「metagenome/raw」に格納されていること
+- 宿主ゲノムデータ群が「metagenome/ref」に格納されていること
+```
+bash qc.sh
+```
+このコマンドによって、「metagenome/qc」という新たなディレクトリが作成される。  
+そして、そのディレクトリの中にQCされたデータが格納される。
+  
+この作業で3-1は終了。
 
 ### 3-2. Taxonomic Profiling
 QCをしたデータを使用して解析をしていきます。  
