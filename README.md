@@ -36,7 +36,7 @@ Dockerさえ入っていれば動かせるようにしています。
 - KneadData
 - BBtools
 - HUMAnN3
-- metaWRAP
+- metaWRAP  
 それぞれのイメージのpullは以下です。
 ```
 docker pull kumalpha/kneaddata
