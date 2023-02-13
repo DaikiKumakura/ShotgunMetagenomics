@@ -84,8 +84,8 @@ docker run -itv $(pwd):/home kumalpha/kneaddata
 ここで解析を実行する。  
 
 #### 3-1-2. 解析の実行
-KneadDataによって、生データから宿主ゲノムリードを除去し、QCを行ってデータのクレンジングを実施する(以下、QCしたデータ)。  
-このQCしたデータを用いて、その後の解析を実施する。  
+KneadDataによって、生データから宿主ゲノムリードを除去し、QCを行ってデータのクレンジングを実施する(以下、QCデータ)。  
+このQCデータを用いて、その後の解析を実施する。  
   
 まずは除去する宿主ゲノムをKneadDataが認識できるように以下のコマンドを打つ。  
 ここでは2でダウンロードしたヒトゲノム「hg38.fa」を例に示す。  
@@ -115,6 +115,61 @@ QCをしたデータを使用して解析をしていきます。
 **解析ツール**
 - BBtools
 - HUMAnN3
+
+#### 3-2-1. Dockerからイメージを起動(BBtools編)
+1でpullした「BBtools」を起動する。  
+まずは2で作成した「metagenome」ディレクトリにてターミナルを起動。  
+次に以下のコマンドを打って、BBtoolsを起動させる。
+```
+docker run -itv $(pwd):/home kumalpha/bbtools
+```
+このコマンドによって、「/home」がそのまま「metagenome」のディレクトリになる。  
+ここで解析を実行する。  
+
+#### 3-2-2. 解析の実行(BBtools編)
+QCデータは現在、paired-endである。  
+このままだとHUMAnN3にインプットできない。  
+そこで、「BBtools」を用いて、paired-end→single-endにする。  
+実行に際して、2でダウンロードしたbashスクリプト「merged.sh」を実行するだけでOK。  
+ただし、以下の点を確認すること。  
+- QCデータが「metagenome/qc」に格納されていること
+```
+bash merged.sh
+```
+このコマンドによって、「metagenome/merged」という新たなディレクトリが作成される。  
+そして、そのディレクトリの中にsingle-end化したQCデータが格納される。
+  
+この作業でBBtools編は終了。
+
+#### 3-2-3. Dockerからイメージを起動(HUMAnN3編)
+1でpullした「HUMAnN3」を起動する。  
+まずは2で作成した「metagenome」ディレクトリにてターミナルを起動。  
+次に以下のコマンドを打って、HUMAnN3を起動させる。
+```
+docker run -itv $(pwd):/home kumalpha/humann3
+```
+このコマンドによって、「/home」がそのまま「metagenome」のディレクトリになる。  
+ここで解析を実行する。  
+
+#### 3-2-4. 解析の実行(HUMAnN3編)
+BBtoolsを使用してデータを整形した(single-end化したQCデータ)。  
+次はHUMAnN3を実行して、サンプル内にどのような微生物がどの程度存在しているか、およびどのような酵素遺伝子をどの程度保有しているかを解析していく。  
+実行に際して、2でダウンロードしたbashスクリプト「profile.sh」を実行するだけでOK。  
+ただし、以下の点を確認すること。  
+- single-end化したQCデータが「metagenome/merged」に格納されていること
+```
+bash merged.sh
+```
+このコマンドによって、「metagenome/profile」という新たなディレクトリが作成される。  
+そして、そのディレクトリの中に以下のデータ群が格納される。
+- GeneFamily.tsv
+- PathAbund.tsv
+- PathCov.tsv
+
+これらのtsvファイルは解析したすべてのサンプルを統合した結果になっている。  
+この結果からさまざまな可視化や議論をしていく。  
+  
+この作業でHUMAnN3編および3-2は終了。
 
 
 ### 3-3. Construction MAG
