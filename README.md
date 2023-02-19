@@ -159,7 +159,7 @@ BBtoolsを使用してデータを整形した(single-end化したQCデータ)�
 - single-end化したQCデータが「metagenome/merged」に格納されていること
 - 各種データベースが「metagenome/db」に格納されていること
 ```
-bash merged.sh
+bash profile.sh
 ```
 このコマンドによって、「metagenome/profile」という新たなディレクトリが作成される。  
 そして、そのディレクトリの中に以下のデータ群が格納される。
