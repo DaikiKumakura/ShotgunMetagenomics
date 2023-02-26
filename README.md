@@ -53,9 +53,9 @@ docker images
 ```
 
 ## 2. デモデータなどのダウンロードとディレクトリの作成
-必要なデータは以下である。
-- デモデータ
-腸内細菌のショットガンメタゲノムデータをダウンロード
+必要なデータは以下である。  
+- デモデータ   
+腸内細菌のショットガンメタゲノムデータをダウンロード  
 ```
 # それぞれ生データをダウンロード。
 wget ftp.sra.ebi.ac.uk/vol1/fastq/ERR011/ERR011347/ERR011347_1.fastq.gz 
@@ -75,7 +75,7 @@ mkdir metagenome
 mkdir metagenome/rawdata
 mv *fastq metagenome/rawdata
 ```
-- 宿主ゲノムデータ
+- 宿主ゲノムデータ  
 必要なデータをダウンロードする。  
 今回の場合、ヒトゲノムのfastaファイルをダウンロードする。  
 ```
@@ -85,8 +85,8 @@ gunzip hg38.fa.gz
 mkdir metagenome/ref
 mv *fa metagenome/ref
 ```
-- 微生物データベース
-パンゲノム・酵素・代謝マップのデータベースをダウンロードする。
+- 微生物データベース  
+パンゲノム・酵素・代謝マップのデータベースをダウンロードする。  
 ```
 humann_databases --download chocophlan full /metagenome/ref_choco --update-config yes
 humann_databases --download uniref uniref90_diamond /metagenome/ref_uniref --update-config yes
