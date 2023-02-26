@@ -53,6 +53,46 @@ docker images
 ```
 
 ## 2. デモデータなどのダウンロードとディレクトリの作成
+必要なデータは以下である。
+- デモデータ
+腸内細菌のショットガンメタゲノムデータをダウンロード
+```
+# それぞれ生データをダウンロード。
+wget ftp.sra.ebi.ac.uk/vol1/fastq/ERR011/ERR011347/ERR011347_1.fastq.gz 
+wget ftp.sra.ebi.ac.uk/vol1/fastq/ERR011/ERR011347/ERR011347_2.fastq.gz 
+
+wget ftp.sra.ebi.ac.uk/vol1/fastq/ERR011/ERR011348/ERR011348_1.fastq.gz 
+wget ftp.sra.ebi.ac.uk/vol1/fastq/ERR011/ERR011348/ERR011348_2.fastq.gz 
+
+wget ftp.sra.ebi.ac.uk/vol1/fastq/ERR011/ERR011349/ERR011349_1.fastq.gz 
+wget ftp.sra.ebi.ac.uk/vol1/fastq/ERR011/ERR011349/ERR011349_2.fastq.gz
+
+# 解凍
+gunzip *qz
+
+# 解凍したものは「metagenome」ディレクトリの「rawdata」ディレクトリに格納
+mkdir metagenome
+mkdir metagenome/rawdata
+mv *fastq metagenome/rawdata
+```
+- 宿主ゲノムデータ
+必要なデータをダウンロードする。  
+今回の場合、ヒトゲノムのfastaファイルをダウンロードする。  
+```
+wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
+gunzip hg38.fa.gz
+# 解凍したものは「metagenome」ディレクトリの「ref」ディレクトリに格納
+mkdir metagenome/ref
+mv *fa metagenome/ref
+```
+- 微生物データベース
+パンゲノム・酵素・代謝マップのデータベースをダウンロードする。
+```
+humann_databases --download chocophlan full /metagenome/ref_choco --update-config yes
+humann_databases --download uniref uniref90_diamond /metagenome/ref_uniref --update-config yes
+humann_databases --download utility_mapping full /metagenome/ref_map --update-config yes
+
+```
 
 ## 3. ステップバイステップでの解析
 ここでは、2で既にディレクトリ構造が要求するものになっていることを前提で進めます。  
