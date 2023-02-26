@@ -81,6 +81,7 @@ mv *fastq metagenome/rawdata
 ```
 wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
 gunzip hg38.fa.gz
+
 # 解凍したものは「metagenome」ディレクトリの「ref」ディレクトリに格納
 mkdir metagenome/ref
 mv *fa metagenome/ref
@@ -91,7 +92,16 @@ mv *fa metagenome/ref
 humann_databases --download chocophlan full /metagenome/ref_choco --update-config yes
 humann_databases --download uniref uniref90_diamond /metagenome/ref_uniref --update-config yes
 humann_databases --download utility_mapping full /metagenome/ref_map --update-config yes
+```
 
+- スクリプトファイル  
+Quality control、Taxonomic profiling、Construction MAGでそれぞれ使用するスクリプトをダウンロードする。  
+```
+wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics/Scripts/merged.sh
+wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics/Scripts/qc_merged.sh
+wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics/Scripts/profile.sh
+wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics/Scripts/qc.sh
+wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics/Scripts/mag.sh
 ```
 
 ## 3. ステップバイステップでの解析
@@ -112,6 +122,7 @@ humann_databases --download utility_mapping full /metagenome/ref_map --update-co
 
 **解析ツール**
 - KneadData
+- BBtools
 
 #### 3-1-1. Dockerからイメージを起動
 1でpullした「KneadData」を起動する。  
@@ -123,7 +134,7 @@ docker run -itv $(pwd):/home kumalpha/kneaddata
 このコマンドによって、「/home」がそのまま「metagenome」のディレクトリになる。  
 ここで解析を実行する。  
 
-#### 3-1-2. 解析の実行
+#### 3-1-2. 解析の実行(paired-end: metaWRAPに使用)
 KneadDataによって、生データから宿主ゲノムリードを除去し、QCを行ってデータのクレンジングを実施する(以下、QCデータ)。  
 このQCデータを用いて、その後の解析を実施する。  
   
@@ -145,18 +156,8 @@ bash qc.sh
 ```
 このコマンドによって、「metagenome/qc」という新たなディレクトリが作成される。  
 そして、そのディレクトリの中にQCされたデータが格納される。
-  
-この作業で3-1は終了。
 
-### 3-2. Taxonomic Profiling
-QCをしたデータを使用して解析をしていきます。  
-まずはこのデータからどんな微生物がどれくらい存在していて、どんな酵素遺伝子を持っているかを見ていきます。  
-
-**解析ツール**
-- BBtools
-- HUMAnN3
-
-#### 3-2-1. Dockerからイメージを起動(BBtools編)
+#### 3-1-3-1. Dockerからイメージを起動(BBtools)
 1でpullした「BBtools」を起動する。  
 まずは2で作成した「metagenome」ディレクトリにてターミナルを起動。  
 次に以下のコマンドを打って、BBtoolsを起動させる。
@@ -164,24 +165,40 @@ QCをしたデータを使用して解析をしていきます。
 docker run -itv $(pwd):/home kumalpha/bbtools
 ```
 このコマンドによって、「/home」がそのまま「metagenome」のディレクトリになる。  
-ここで解析を実行する。  
+ここで解析を実行する。
 
-#### 3-2-2. 解析の実行(BBtools編)
-QCデータは現在、paired-endである。  
+#### 3-1-3-2. 解析の実行(single-end: HUMAnN3に使用)  
+生データは現在、paired-endである。  
 このままだとHUMAnN3にインプットできない。  
 そこで、「BBtools」を用いて、paired-end→single-endにする。  
 実行に際して、2でダウンロードしたbashスクリプト「merged.sh」を実行するだけでOK。  
 ただし、以下の点を確認すること。  
-- QCデータが「metagenome/qc」に格納されていること
+- 生データが「metagenome/rawdata」に格納されていること
 ```
 bash merged.sh
 ```
 このコマンドによって、「metagenome/merged」という新たなディレクトリが作成される。  
-そして、そのディレクトリの中にsingle-end化したQCデータが格納される。
+そして、そのディレクトリの中にsingle-end化した生データが格納される。  
   
-この作業でBBtools編は終了。
+次に、QCする。
+実行に際して、「qc_merged.sh」を実行するだけでOK。  
+ただし、以下の点を確認すること。  
+- single-endの生データが「metagenome/merged」に格納されていること
+- 宿主ゲノムデータ群が「metagenome/ref」に格納されていること
+```
+bash qc_merged.sh
+```
 
-#### 3-2-3. Dockerからイメージを起動(HUMAnN3編)
+この作業で3-1は終了。
+
+### 3-2. Taxonomic Profiling
+QCをしたデータを使用して解析をしていきます。  
+まずはこのデータからどんな微生物がどれくらい存在していて、どんな酵素遺伝子を持っているかを見ていきます。  
+
+**解析ツール**
+- HUMAnN3
+
+#### 3-2-1. Dockerからイメージを起動(HUMAnN3)
 1でpullした「HUMAnN3」を起動する。  
 まずは2で作成した「metagenome」ディレクトリにてターミナルを起動。  
 次に以下のコマンドを打って、HUMAnN3を起動させる。
@@ -191,26 +208,25 @@ docker run -itv $(pwd):/home kumalpha/humann3
 このコマンドによって、「/home」がそのまま「metagenome」のディレクトリになる。  
 ここで解析を実行する。  
 
-#### 3-2-4. 解析の実行(HUMAnN3編)
-BBtoolsを使用してデータを整形した(single-end化したQCデータ)。  
+#### 3-2-2. 解析の実行(HUMAnN3)
 次はHUMAnN3を実行して、サンプル内にどのような微生物がどの程度存在しているか、およびどのような酵素遺伝子をどの程度保有しているかを解析していく。  
 実行に際して、2でダウンロードしたbashスクリプト「profile.sh」を実行するだけでOK。  
 ただし、以下の点を確認すること。  
-- single-end化したQCデータが「metagenome/merged」に格納されていること
-- 各種データベースが「metagenome/db」に格納されていること
+- single-end化したQCデータが「metagenome/qc_merged」に格納されていること
+- 各種データベースが「metagenome/ref_choco」、「metagenome/ref_uniref」、「metagenome/ref_map」に格納されていること
 ```
 bash profile.sh
 ```
 このコマンドによって、「metagenome/profile」という新たなディレクトリが作成される。  
 そして、そのディレクトリの中に以下のデータ群が格納される。
-- GeneFamily.tsv
-- PathAbund.tsv
-- PathCov.tsv
+- genefamily.tsv
+- pathabund.tsv
+- pathcov.tsv
 
 これらのtsvファイルは解析したすべてのサンプルを統合した結果になっている。  
 この結果からさまざまな可視化や議論をしていく。  
   
-この作業でHUMAnN3編および3-2は終了。
+この作業で3-2は終了。
 
 
 ### 3-3. Construction MAG
