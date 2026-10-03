@@ -12,6 +12,10 @@ So, if you want English explain, please ask me (https://daikikumakura.github.io/
 以下ではその解析チュートリアルを示します。  
 何かあればお気軽にお尋ねください (https://daikikumakura.github.io/) 。
 
+## 確認範囲（2026-09-27）
+
+ダウンロード先・圧縮ファイルの扱い・コンテナ内の作業場所など、導入手順の明らかな不整合を修正しました。Shellスクリプトの構文は確認済みですが、Dockerイメージのビルドと実データでの全工程は未検証です。旧版ツールを前提とする教材です。
+
 ## コンセプト
 可能な限り簡単で誰でも動かせる解析を目指します。  
 そのため、少ないツールでショットガンメタゲノム解析を実行できるようにツールを絞っています。  
@@ -22,7 +26,7 @@ So, if you want English explain, please ask me (https://daikikumakura.github.io/
 - 多人数で同じショットガンメタゲノム解析をするための指標が欲しい。
 
 ## 要求
-Dockerさえ入っていれば動かせるようにしています。  
+Dockerに加え、各イメージ、参照データベース、十分なメモリ・ディスク容量が必要です。  
 また、解析の都合上ある程度のスペックがないと計算時間が大幅にかかることが予想されます。  
 
 ## 流れ
@@ -67,13 +71,9 @@ wget ftp.sra.ebi.ac.uk/vol1/fastq/ERR011/ERR011348/ERR011348_2.fastq.gz
 wget ftp.sra.ebi.ac.uk/vol1/fastq/ERR011/ERR011349/ERR011349_1.fastq.gz 
 wget ftp.sra.ebi.ac.uk/vol1/fastq/ERR011/ERR011349/ERR011349_2.fastq.gz
 
-# 解凍
-gunzip *qz
-
-# 解凍したものは「metagenome」ディレクトリの「rawdata」ディレクトリに格納
-mkdir metagenome
-mkdir metagenome/rawdata
-mv *fastq metagenome/rawdata
+# 後続のスクリプトは .fastq.gz を入力に使うため、解凍しない
+mkdir -p metagenome/rawdata
+mv ERR01134[789]_[12].fastq.gz metagenome/rawdata/
 ```
 - 宿主ゲノムデータ  
 必要なデータをダウンロードする。  
@@ -84,24 +84,28 @@ gunzip hg38.fa.gz
 
 # 解凍したものは「metagenome」ディレクトリの「ref」ディレクトリに格納
 mkdir metagenome/ref
-mv *fa metagenome/ref
+mv hg38.fa metagenome/ref/
 ```
 - 微生物データベース  
-パンゲノム・酵素・代謝マップのデータベースをダウンロードする。  
+パンゲノム・酵素・代謝マップのデータベースをダウンロードする。ここまで作業したディレクトリから `metagenome` に移動し、HUMAnNコンテナを起動します。データベースのコマンドはコンテナ内で実行します。終了後は `exit` でホストへ戻ります。
+
+```bash
+cd metagenome
+docker run --rm -it -v "$(pwd):/home" -w /home kumalpha/humann3 bash
+```  
 ```
-humann_databases --download chocophlan full /metagenome/ref_choco --update-config yes
-humann_databases --download uniref uniref90_diamond /metagenome/ref_uniref --update-config yes
-humann_databases --download utility_mapping full /metagenome/ref_map --update-config yes
+humann_databases --download chocophlan full /home/ref_choco --update-config yes
+humann_databases --download uniref uniref90_diamond /home/ref_uniref --update-config yes
+humann_databases --download utility_mapping full /home/ref_map --update-config yes
 ```
 
 - スクリプトファイル  
-Quality control、Taxonomic profiling、Construction MAGでそれぞれ使用するスクリプトをダウンロードする。  
+Quality controlと機能プロファイリングで使用する4本をダウンロードする。`mag.sh` はこのリポジトリには含まれていません。以下は `metagenome` ディレクトリで実行します。  
 ```
-wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics/Scripts/merged.sh
-wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics/Scripts/qc_merged.sh
-wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics/Scripts/profile.sh
-wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics/Scripts/qc.sh
-wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics/Scripts/mag.sh
+wget https://raw.githubusercontent.com/DaikiKumakura/ShotgunMetagenomics/main/Scripts/merged.sh
+wget https://raw.githubusercontent.com/DaikiKumakura/ShotgunMetagenomics/main/Scripts/qc_merged.sh
+wget https://raw.githubusercontent.com/DaikiKumakura/ShotgunMetagenomics/main/Scripts/profile.sh
+wget https://raw.githubusercontent.com/DaikiKumakura/ShotgunMetagenomics/main/Scripts/qc.sh
 ```
 
 ## 3. ステップバイステップでの解析
@@ -129,27 +133,27 @@ wget --no-check-certificate https://github.com/DaikiKumakura/ShotgunMetagenomics
 まずは2で作成した「metagenome」ディレクトリにてターミナルを起動。  
 次に以下のコマンドを打って、KneadDataを起動させる。
 ```
-docker run -itv $(pwd):/home kumalpha/kneaddata
+docker run --rm -it -v "$(pwd):/home" -w /home kumalpha/kneaddata
 ```
 このコマンドによって、「/home」がそのまま「metagenome」のディレクトリになる。  
-ここで解析を実行する。  
+ここで解析を実行する。初回は、コンテナ内で宿主ゲノムのインデックスを作成します。
+
+```bash
+bowtie2-build ref/hg38.fa ref/ref_db
+```  
 
 #### 3-1-2. 解析の実行(paired-end: metaWRAPに使用)
 KneadDataによって、生データから宿主ゲノムリードを除去し、QCを行ってデータのクレンジングを実施する(以下、QCデータ)。  
 このQCデータを用いて、その後の解析を実施する。  
   
-まずは除去する宿主ゲノムをKneadDataが認識できるように以下のコマンドを打つ。  
-ここでは2でダウンロードしたヒトゲノム「hg38.fa」を例に示す。  
-```
-bowtie2-build ref/hg38.fa -o ref/ref_db ref_db
-```
+宿主ゲノムのインデックスは3-1-1で作成済みのものを使用します。  
 このコマンドによって、「metagenome」ディレクトリの「ref」ディレクトリに格納されている「hg38.fa」をKneadDataが扱えるようなデータファイルにした。  
 そして、そのデータファイルは「ref」の中に「ref_db」として格納されている。  
   
 次にQCを実行する。  
 実行に際して、2でダウンロードしたbashスクリプト「qc.sh」を実行するだけでOK。  
 ただし、以下の点を確認すること。  
-- 生データが「metagenome/raw」に格納されていること
+- 生データが「metagenome/rawdata」に格納されていること
 - 宿主ゲノムデータ群が「metagenome/ref」に格納されていること
 ```
 bash qc.sh
@@ -162,7 +166,7 @@ bash qc.sh
 まずは2で作成した「metagenome」ディレクトリにてターミナルを起動。  
 次に以下のコマンドを打って、BBtoolsを起動させる。
 ```
-docker run -itv $(pwd):/home kumalpha/bbtools
+docker run --rm -it -v "$(pwd):/home" -w /home kumalpha/bbtools
 ```
 このコマンドによって、「/home」がそのまま「metagenome」のディレクトリになる。  
 ここで解析を実行する。
@@ -180,7 +184,11 @@ bash merged.sh
 このコマンドによって、「metagenome/merged」という新たなディレクトリが作成される。  
 そして、そのディレクトリの中にsingle-end化した生データが格納される。  
   
-次に、QCする。
+BBtoolsコンテナを `exit` で終了し、ホストの `metagenome` ディレクトリからKneadDataコンテナを再度起動してQCします。
+
+```bash
+docker run --rm -it -v "$(pwd):/home" -w /home kumalpha/kneaddata
+```
 実行に際して、「qc_merged.sh」を実行するだけでOK。  
 ただし、以下の点を確認すること。  
 - single-endの生データが「metagenome/merged」に格納されていること
@@ -205,7 +213,7 @@ QCをしたデータを使用して解析をしていきます。
 まずは2で作成した「metagenome」ディレクトリにてターミナルを起動。  
 次に以下のコマンドを打って、HUMAnN3を起動させる。
 ```
-docker run -itv $(pwd):/home kumalpha/humann3
+docker run --rm -it -v "$(pwd):/home" -w /home kumalpha/humann3
 ```
 このコマンドによって、「/home」がそのまま「metagenome」のディレクトリになる。  
 ここで解析を実行する。  
@@ -221,9 +229,9 @@ bash profile.sh
 ```
 このコマンドによって、「metagenome/profile」という新たなディレクトリが作成される。  
 そして、そのディレクトリの中に以下のデータ群が格納される。
-- genefamily.tsv
-- pathabund.tsv
-- pathcov.tsv
+- genefamilies.tsv
+- pathabundance.tsv
+- pathcoverage.tsv
 
 これらのtsvファイルは解析したすべてのサンプルを統合した結果になっている。  
 この結果からさまざまな可視化や議論をしていく。  
@@ -232,7 +240,9 @@ bash profile.sh
 
 ---
 
-### 3-3. Construction MAG
+### 3-3. Construction MAG（未完成）
+
+この節の実行手順・スクリプトは未提供です。現時点で一連の解析が完結するものとして扱わないでください。
 QCをしたデータを使用して解析をしていきます。  
 使えるデータ全てを使って、微生物のゲノムを再構成(MAG)します。  
 MAGはその後さまざまな解析に利用可能です。  
