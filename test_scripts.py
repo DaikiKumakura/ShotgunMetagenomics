@@ -73,10 +73,21 @@ class ScriptTests(unittest.TestCase):
     def test_failed_qc_stops_without_cleanup(self):
         self.paired()
         (self.root/'ref').mkdir()
-        for n in range(6): (self.root/'ref'/f'ref_db.{n}.bt2').write_text('index')
+        for n in ('1','2','3','4','rev.1','rev.2'): (self.root/'ref'/f'ref_db.{n}.bt2').write_text('index')
         self.tool('kneaddata','printf "diagnostic" > qc/diagnostic; exit 19')
         self.assertEqual(self.run_script('qc.sh').returncode,19)
         self.assertEqual((self.root/'qc/diagnostic').read_text(),'diagnostic')
+
+    def test_single_end_qc_output_contract(self):
+        (self.root/'merged').mkdir()
+        (self.root/'merged/sample name.fastq').write_text('reads')
+        (self.root/'ref').mkdir()
+        for n in ('1','2','3','4','rev.1','rev.2'):
+            (self.root/'ref'/f'ref_db.{n}.bt2').write_text('index')
+        self.tool('kneaddata', 'while (($#)); do if [[ "$1" == --output-prefix ]]; then prefix="$2"; break; fi; shift; done; printf "clean reads" > "qc_merged/$prefix.fastq"')
+        result=self.run_script('qc_merged.sh')
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertTrue((self.root/'qc_merged/sample name_kneaddata.fastq').exists())
 
     def test_profile_uses_only_final_clean_reads(self):
         (self.root/'qc_merged').mkdir()

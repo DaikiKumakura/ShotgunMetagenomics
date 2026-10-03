@@ -10,8 +10,15 @@ for f in "${files[@]}"; do
     r="${f%_1.fastq.gz}_2.fastq.gz"
     [[ -s "$f" && -s "$r" ]] || fail "Missing or empty paired input: $f / $r"
 done
-indexes=(ref/ref_db*.bt2 ref/ref_db*.bt2l)
-((${#indexes[@]} >= 6)) || fail "Missing Bowtie2 index ref/ref_db"
+index_ok=0
+for extension in bt2 bt2l; do
+    complete=1
+    for suffix in 1 2 3 4 rev.1 rev.2; do
+        [[ -s "ref/ref_db.$suffix.$extension" ]] || complete=0
+    done
+    if ((complete)); then index_ok=1; break; fi
+done
+((index_ok)) || fail "Missing or incomplete Bowtie2 index ref/ref_db"
 command -v kneaddata >/dev/null || fail "kneaddata is not on PATH"
 [[ ! -e qc ]] || fail "qc/ already exists; use a fresh working directory"
 mkdir qc
