@@ -1,38 +1,66 @@
 # ShotgunMetagenomics
-This directory is the tutorial of shotgun metagenomics.  
-And then, this tutorial is the only Japanese.  
-So, if you want English explain, please ask me (https://daikikumakura.github.io/).  
+
+**A Japanese hands-on tutorial for shotgun metagenomics with Docker: quality
+control, host-read removal and functional profiling of gut metagenomes.**
+
+The tutorial is written in Japanese. It runs every tool in a Docker container,
+so nothing but Docker has to be installed. It downloads public human gut
+metagenomes (ERR011347–ERR011349) and goes from raw reads to HUMAnN 3 gene
+family and pathway tables.
+
+> [!WARNING]
+> The scripts check their inputs and stop on errors, and their control flow
+> is tested, but the Docker images have not been rebuilt and the whole
+> workflow has not been run on real data recently. The tutorial assumes older
+> tool versions, and the MAG section is unfinished.
 
 ---
 
-このディレクトリではショットガンメタゲノム解析のチュートリアルになっています。  
-基本要求として、PCにDockerがインストールされており、Dockerが動く状態です。  
-主にDockerによる解析のため、PythonやRなどの言語をローカル上に入れる必要は無いです。  
-（ただし解析した結果から図を作成する場合、その限りではありません）  
-以下ではその解析チュートリアルを示します。  
-何かあればお気軽にお尋ねください (https://daikikumakura.github.io/) 。
+ショットガンメタゲノム解析のチュートリアルです。Dockerが動くPCがあれば、PythonやRをローカルに入れずに、生データからHUMAnN 3の機能プロファイルまで進められます（結果から図を作る場合は別途必要）。英語の説明が必要な場合は[サイト](https://daikikumakura.github.io/)からお尋ねください。
 
-## 確認範囲（2026-09-27）
+## 全体の流れ
 
-ダウンロード先・圧縮ファイルの扱い・コンテナ内の作業場所など、導入手順の明らかな不整合を修正しました。Shellスクリプトの構文は確認済みですが、Dockerイメージのビルドと実データでの全工程は未検証です。旧版ツールを前提とする教材です。
+```text
+  生データ（paired-end FASTQ）
+        │  qc.sh           KneadData   宿主（ヒト）リードの除去とQC → qc/
+        │  merged.sh       BBtools     paired-end を single-end に結合 → merged/
+        │  qc_merged.sh    KneadData   結合したリードのQC → qc_merged/
+        │  profile.sh      HUMAnN 3    機能プロファイリング → profile/
+        ▼
+  genefamilies.tsv · pathabundance.tsv · pathcoverage.tsv
+```
 
-## コンセプト
-可能な限り簡単で誰でも動かせる解析を目指します。  
-そのため、少ないツールでショットガンメタゲノム解析を実行できるようにツールを絞っています。  
-また、誰でも使用可能にするために、Dockerによる解析を想定しています。  
-以下がこのチュートリアルで想定する対象者です。  
-- ショットガンメタゲノム解析を動かしてみたい。
-- 生データを手に入れたが、一貫した解析を動かす環境を構築していない。
-- 多人数で同じショットガンメタゲノム解析をするための指標が欲しい。
+| 段階 | スクリプト | コンテナ | 入力 | 出力 |
+|---|---|---|---|---|
+| 1. QC（paired-end） | `qc.sh` | `kumalpha/kneaddata` | `rawdata/*_1.fastq.gz`、`_2.fastq.gz` | `qc/` |
+| 2. 結合 | `merged.sh` | `kumalpha/bbtools` | `rawdata/` | `merged/*.fastq` |
+| 3. QC（single-end） | `qc_merged.sh` | `kumalpha/kneaddata` | `merged/*.fastq` | `qc_merged/` |
+| 4. 機能プロファイリング | `profile.sh` | `kumalpha/humann3` | `qc_merged/*_kneaddata.fastq` | `profile/`（全サンプルを結合した表） |
+| 5. MAG構築 | （未提供） | `kumalpha/metawrap-checkm` | — | 未完成 |
 
-## 要求
-Dockerに加え、各イメージ、参照データベース、十分なメモリ・ディスク容量が必要です。  
-また、解析の都合上ある程度のスペックがないと計算時間が大幅にかかることが予想されます。  
+機能プロファイリングの経路は 2 → 3 → 4 です。1 は paired-end のQC結果を別途使う場合の経路です。各スクリプトの詳細は[`Scripts/README.md`](Scripts/README.md)にあります。
 
-## 流れ
-1. イメージのpull
-2. デモデータなどのダウンロードとディレクトリの作成
-3. ステップバイステップでの解析
+## 対象者
+
+- ショットガンメタゲノム解析を一度動かしてみたい人
+- 生データはあるが、一貫した解析環境をまだ作っていない人
+- 複数人で同じ手順の解析をそろえたい人
+
+ツールは最小限に絞っています。ここで使うツールは一例で、目的に応じて置き換えてください。
+
+## 必要なもの
+
+- Docker（Mac、またはWSL2上のUbuntuのターミナルで動かす想定）
+- 宿主（ヒト）ゲノム hg38 と HUMAnN のデータベース（ChocoPhlAn、UniRef90、utility mapping）。合わせて数十GB規模のディスクが必要です
+- 十分なメモリとCPU。スペックが低いと計算に長時間かかります
+
+## 確認範囲
+
+- 2026-09-27：ダウンロード先、圧縮ファイルの扱い、コンテナ内の作業場所など、手順の明らかな不整合を修正しました。
+- 2026-10-03：入力・ペア・参照DB・実行ファイルの確認と、失敗時の停止を各スクリプトに追加しました。制御の流れを確かめるテスト（`python -m unittest -v`）は GitHub Actions でも実行しています。
+- Dockerイメージのビルドと、実データでの全工程は未検証です。
+
+---
 
 ## 1. イメージのpull
 まずはDockerHub(https://hub.docker.com/) から、今回の解析で使用するイメージをダウンロード＆インストール(pull)します。  
@@ -258,6 +286,11 @@ MAGはその後さまざまな解析に利用可能です。
 ## スクリプトの安全な実行
 入力・ペア・参照DBの欠落やコマンドの失敗は停止する。出力ディレクトリが既存の場合も停止する。中間ファイルを保存し、HUMAnNには最終clean reads (`*_kneaddata.fastq`)のみを渡す。`python -m unittest -v` は小規模な入力と代用コマンドで制御処理を検証する。GitHub Actionsでも実行するが、実データの生物学的結果は保証しない。
 
-## Related writing
+## 関連 / Related
 
-- [ShotgunMetagenomics on the author's site](https://daikikumakura.github.io/software/shotgunmetagenomics.html): summary and status.
+- [Dockerfiles](https://github.com/DaikiKumakura/Dockerfiles): このチュートリアルで使うイメージの定義（未保守の旧定義を含む）
+- [サイトの紹介ページ](https://daikikumakura.github.io/software/shotgunmetagenomics.html)
+
+## License
+
+MIT
