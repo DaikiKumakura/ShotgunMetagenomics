@@ -20,6 +20,8 @@ family and pathway tables.
 
 ## 全体の流れ
 
+初めて実行する場合は、[必要なもの](#必要なもの)と[確認範囲](#確認範囲)を確認してから、下の番号付き手順を順に進めてください。
+
 ```text
   生データ（paired-end FASTQ）
         │  qc.sh           KneadData   宿主（ヒト）リードの除去とQC → qc/
