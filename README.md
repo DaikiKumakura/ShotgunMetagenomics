@@ -295,4 +295,4 @@ MAGはその後さまざまな解析に利用可能です。
 
 ## License
 
-MIT
+This project is licensed under MIT. See [LICENSE](LICENSE) for the license terms.
