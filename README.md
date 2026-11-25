@@ -298,6 +298,10 @@ MAGはその後さまざまな解析に利用可能です。
 - [Dockerfiles](https://github.com/DaikiKumakura/Dockerfiles): このチュートリアルで使うイメージの定義（未保守の旧定義を含む）
 - [サイトの紹介ページ](https://daikikumakura.github.io/software/shotgunmetagenomics.html)
 
+## Citation
+
+Kumakura, D. *ShotgunMetagenomics* [Software]. [GitHub repository](https://github.com/DaikiKumakura/ShotgunMetagenomics).
+
 ## License
 
 This project is licensed under MIT. See [LICENSE](LICENSE) for the license terms.
